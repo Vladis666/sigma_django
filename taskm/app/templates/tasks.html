@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task List</title>
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+        }
+
+        /* Gradient Background */
+        body {
+            background: linear-gradient(135deg, #8e44ad, #f39c12);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        /* Header */
+        header {
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 36px;
+            text-shadow: 2px 2px 10px rgba(255, 255, 255, 0.4);
+        }
+
+        header p {
+            font-size: 18px;
+            opacity: 0.8;
+        }
+
+        /* Task List Section */
+        .task-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        .task-card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            width: 80%;
+            max-width: 500px;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .task-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.4);
+        }
+
+        .task-card h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .task-card p {
+            font-size: 18px;
+            color: #ddd;
+        }
+
+        /* Button */
+        .add-task-btn {
+            background: linear-gradient(45deg, #e0a8f3, #f6c0d4);
+            color: black;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 30px;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .add-task-btn:hover {
+            background: linear-gradient(45deg, #f6c0d4, #e0a8f3);
+            transform: scale(1.05);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Task List</h1>
+        <p>Manage your tasks with ease and efficiency</p>
+    </header>
+
+    <section class="task-container">
+        <div class="task-card">
+            <h2>Complete Report</h2>
+            <p>Finish writing the quarterly report for the client and send it by the end of the day.</p>
+        </div>
+
+        <div class="task-card">
+            <h2>Team Meeting</h2>
+            <p>Join the team meeting at 3:00 PM to discuss project updates and progress.</p>
+        </div>
+
+        <div class="task-card">
+            <h2>Prepare Presentation</h2>
+            <p>Prepare slides for the upcoming presentation to senior management.</p>
+        </div>
+
+        <div class="task-card">
+            <h2>Review Documents</h2>
+            <p>Go through the latest draft of the document and make necessary revisions.</p>
+        </div>
+
+        <button class="add-task-btn">Add New Task</button>
+    </section>
+
+</body>
+</html>

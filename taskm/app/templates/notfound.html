@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found</title>
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Animated Background */
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, rgba(255,0,150,0.8), rgba(0,0,255,0.8));
+            animation: animateBackground 6s infinite alternate ease-in-out;
+            font-family: 'Arial', sans-serif;
+            color: white;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        @keyframes animateBackground {
+            0% {
+                background: radial-gradient(circle at 30% 30%, rgba(255,0,150,0.8), rgba(0,0,255,0.8));
+            }
+            50% {
+                background: radial-gradient(circle at 70% 70%, rgba(0, 150, 255, 0.8), rgba(255, 0, 150, 0.8));
+            }
+            100% {
+                background: radial-gradient(circle at 50% 50%, rgba(255, 150, 0, 0.8), rgba(0, 255, 150, 0.8));
+            }
+        }
+
+        /* Glowing Text Effect */
+        h1 {
+            font-size: 5rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.6);
+            animation: flicker 1.5s infinite alternate;
+        }
+
+        @keyframes flicker {
+            0% { text-shadow: 0 0 15px rgba(255,255,255,0.8), 0 0 30px rgba(255,255,255,0.6); }
+            100% { text-shadow: 0 0 5px rgba(255,255,255,0.6), 0 0 15px rgba(255,255,255,0.4); }
+        }
+
+        /* Floating Text Animation */
+        p {
+            font-size: 1.5rem;
+            opacity: 0.9;
+            animation: floatText 3s infinite alternate ease-in-out;
+        }
+
+        @keyframes floatText {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(10px); }
+        }
+
+        /* Back Home Button */
+        .home-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            background: linear-gradient(45deg, #ff0077, #ff9900);
+            border-radius: 30px;
+            transition: 0.3s ease-in-out;
+            box-shadow: 0 5px 15px rgba(255,0,150,0.5);
+        }
+
+        .home-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(255,0,150,0.7);
+        }
+
+        /* Background Animation Elements */
+        .bubble {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            animation: moveBubble 6s infinite ease-in-out alternate;
+        }
+
+        @keyframes moveBubble {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-100px); opacity: 0.5; }
+        }
+
+        .bubble:nth-child(1) { top: 10%; left: 20%; animation-duration: 5s; }
+        .bubble:nth-child(2) { top: 30%; left: 60%; animation-duration: 7s; }
+        .bubble:nth-child(3) { top: 50%; left: 40%; animation-duration: 4s; }
+        .bubble:nth-child(4) { top: 70%; left: 80%; animation-duration: 6s; }
+        .bubble:nth-child(5) { top: 90%; left: 10%; animation-duration: 5s; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Floating Bubbles -->
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+
+    <div>
+        <h1>404</h1>
+        <p>Oops! The page you are looking for is lost in cyberspace.</p>
+        <a href="/" class="home-btn">Take me home</a>
+    </div>
+
+</body>
+</html>
