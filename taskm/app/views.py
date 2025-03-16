@@ -11,40 +11,171 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.utils.timezone import now
-
-from app.models import Product, Sale
+from django.utils import timezone
+from app.models import Product, Sale, Employee, SalesPlan
+from .forms import SaleForm, SalesFilterForm
+from django.contrib import messages
+from django.shortcuts import render, redirect
 
 
 def home(request):
-    return render(request, "app/home.html")
+    # Основні показники для головної сторінки
+    total_sales = Sale.objects.count()
+    total_revenue = Sale.objects.aggregate(total=Sum('product__price'))['total'] or 0
+    employees_count = Employee.objects.count()
+    products_count = Product.objects.count()
+
+    # Останні продажі
+    recent_sales = Sale.objects.order_by('-date')[:5]
+
+    return render(request, 'app/home.html', {
+        'total_sales': total_sales,
+        'total_revenue': total_revenue,
+        'employees_count': employees_count,
+        'products_count': products_count,
+        'recent_sales': recent_sales,
+    })
 
 
 def add_sale(request):
-    return render(request, "app/add_sale.html")
+    if request.method == 'POST':
+        form = SaleForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Продаж успішно додано!')
+            return redirect('sales_list')
+    else:
+        form = SaleForm()
 
+    return render(request, 'app/add_sale.html', {'form': form})
 
 def admin_dashboard(request):
-    return render(request, "app/admin_dashboard.html")
+    total_sales = Sale.objects.count()
+    total_revenue = Sale.objects.aggregate(total=Sum('product__price'))['total'] or 0
+    employees_count = Employee.objects.count()
+    products_count = Product.objects.count()
 
+    # Отримуємо поточну дату і початок місяця
+    today = timezone.now().date()
+    last_30_days = today - timedelta(days=30)
+
+    # Останні продажі
+    recent_sales = Sale.objects.order_by('-date')[:5]
+
+    # Топ працівників за останні 30 днів
+    top_employees = Employee.objects.filter(sale__date__date__gte=last_30_days) \
+                        .annotate(sales_count=Count('sale')) \
+                        .order_by('-sales_count')[:5]
+
+    # Активні плани продажів
+    active_plans = SalesPlan.objects.filter(
+        start_date__lte=today,
+        end_date__gte=today
+    )
+
+    plans_progress = []
+    for plan in active_plans:
+        # Обчислюємо кількість продажів для цього товару в період плану
+        actual_sales = Sale.objects.filter(
+            product=plan.product,
+            date__date__gte=plan.start_date,
+            date__date__lte=today
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+
+        # Рахуємо відсоток виконання плану
+        if plan.target_amount > 0:
+            progress_percent = (actual_sales / plan.target_amount) * 100
+        else:
+            progress_percent = 0
+
+        plans_progress.append({
+            'plan': plan,
+            'actual_sales': actual_sales,
+            'progress_percent': progress_percent,
+            'days_left': (plan.end_date - today).days
+        })
+
+    # Товари з малим запасом
+    low_stock_products = Product.objects.filter(active=True, quantity__lt=10).order_by('quantity')[:5]
+
+    return render(request, 'app/admin_dashboard.html', {
+        'total_sales': total_sales,
+        'total_revenue': total_revenue,
+        'employees_count': employees_count,
+        'products_count': products_count,
+        'recent_sales': recent_sales,
+        'top_employees': top_employees,
+        'plans_progress': plans_progress,
+        'low_stock_products': low_stock_products,
+    })
 
 def daily_stats(request):
-    return render(request, "app/daily_stats.html")
+    seven_days_ago = timezone.now().date() - timedelta(days=7)
 
+    daily_data = []
+    for days_ago in range(7):
+        date = timezone.now().date() - timedelta(days=days_ago)
+        sales_count = Sale.objects.filter(date__date=date).count()
+        revenue = Sale.objects.filter(date__date=date).aggregate(
+            total=Sum('product__price'))['total'] or 0
+
+        daily_data.append({
+            'date': date,
+            'sales_count': sales_count,
+            'revenue': revenue
+        })
+
+    daily_data.reverse()  # Щоб показати від старих до нових
+
+    return render(request, 'app/daily_stats.html', {'daily_data': daily_data})
 
 def employee_list(request):
+    employees = Employee.objects.all()
     return render(request, "app/employee_list.html")
 
 
 def leaderboard(request):
-    return render(request, "app/leaderboard.html")
+    thirty_days_ago = timezone.now() - timedelta(days=30)
 
+    # Отримуємо топ співробітників за кількістю продажів
+    leaders = Employee.objects.annotate(
+        sales_count=Count('sale', filter=Sale.objects.filter(date__gte=thirty_days_ago))
+    ).order_by('-sales_count')[:10]
+
+    return render(request, 'app/leaderboard.html', {
+        'leaders': leaders,
+    })
+   
 
 def product_list(request):
-    return render(request, "app/product_list.html")
+    products = Product.objects.all()
+    return render(request, 'app/product_list.html', {'products': products})
 
 
 def sales_list(request):
-    return render(request, "app/sales_list.html")
+    sales = Sale.objects.all().order_by('-date')
+
+    filter_form = SalesFilterForm(request.GET)
+
+    if filter_form.is_valid():
+        start_date = filter_form.cleaned_data.get('start_date')
+        end_date = filter_form.cleaned_data.get('end_date')
+        employee = filter_form.cleaned_data.get('employee')
+        product = filter_form.cleaned_data.get('product')
+
+        if start_date:
+            sales = sales.filter(date__date__gte=start_date)
+        if end_date:
+            sales = sales.filter(date__date__lte=end_date)
+
+        if employee:
+            sales = sales.filter(employee=employee)
+
+        if product:
+            sales = sales.filter(product=product)
+
+    return render(request, 'app/sales_list.html', {'sales': sales, 'filter_form': filter_form})
+
 
 
 def page_not_found(request, exception):
