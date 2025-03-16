@@ -1,8 +1,7 @@
 import json
 from datetime import timedelta, datetime
-
 from django.contrib.auth import login, authenticate, logout
-from django.db.models import Sum, F, DecimalField, Count
+from django.db.models import Sum, F, DecimalField, Count, Value
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -157,9 +156,8 @@ class ProductCreateView(LoginRequiredMixin, View):
 
             product = Product.objects.create(
                 name=data['name'],
-                description=data.get('description', ''),  # Use get with default value
                 price=data['price'],
-                created_by=request.user
+                quantity=data.get('quantity', 0)
             )
 
             return JsonResponse({
@@ -229,12 +227,15 @@ class ProductUpdateView(LoginRequiredMixin, View):
 class ProductDeleteView(LoginRequiredMixin, View):
     def delete(self, request, product_id):
         try:
-            product = Product.objects.get(id=product_id)
+            # Перевіряємо, чи користувач автентифікований
+            if not request.user.is_authenticated:
+                return JsonResponse({'error': 'Authentication required'}, status=401)
 
-            # Security check
+            # Перевіряємо, чи користувач має права адміністратора
             if not request.user.is_staff:
                 return JsonResponse({'error': 'Not authorized to delete products'}, status=403)
 
+            product = Product.objects.get(id=product_id)
             product.delete()
             return JsonResponse({'success': 'Product deleted successfully'}, status=200)
         except Product.DoesNotExist:
@@ -244,18 +245,21 @@ class ProductDeleteView(LoginRequiredMixin, View):
 
 
 class SalesStatisticsView(DateRangeMixin, View):
-    def get(self, request, period='day'):
+    def get(self, request):
         start_date, end_date, period = self.get_date_range(request)
 
-        # Total sales statistics
-        total_sales = Sale.objects.filter(date__range=[start_date, end_date]).aggregate(
-            total=Coalesce(Sum('amount'), 0, output_field=DecimalField())
+        # Оптимізуємо запити до бази даних, виконуючи один запит з обома агрегаціями
+        sales_data = Sale.objects.filter(date__range=[start_date, end_date])
+        total_sales = sales_data.aggregate(
+            total=Coalesce(Sum(F('product__price') * F('quantity')), Value(0), output_field=DecimalField())
         )['total']
 
-        total_transactions = Sale.objects.filter(date__range=[start_date, end_date]).count()
+        # Перетворюємо Decimal на float для коректної JSON серіалізації
+        total_sales_float = float(total_sales) if total_sales else 0.0
+        total_transactions = sales_data.count()
 
         return JsonResponse({
-            'total_sales': total_sales,
+            'total_sales': total_sales_float,
             'total_transactions': total_transactions,
             'period': period,
             'start_date': start_date.strftime('%Y-%m-%d'),
@@ -270,15 +274,14 @@ class EmployeePerformanceView(DateRangeMixin, View):
 
         start_date, end_date, period = self.get_date_range(request)
 
-        # Employee performance
         employee_performance = Sale.objects.filter(
             date__range=[start_date, end_date]
         ).values(
-            'employee__id', 'employee__username'
+            'employee__id', 'employee__user__username'  # Змінено на правильний шлях до username
         ).annotate(
-            total_sales=Sum('amount'),
+            total_sales=Sum(F('product__price') * F('quantity')),
             transactions_count=Count('id'),
-            average_sale=Sum('amount') / Count('id')
+            average_sale=Sum(F('product__price') * F('quantity')) / Count('id')
         ).order_by('-total_sales')[:limit]
 
         return JsonResponse({
@@ -296,15 +299,14 @@ class ProductPerformanceView(DateRangeMixin, View):
 
         start_date, end_date, period = self.get_date_range(request)
 
-        # Product performance
         product_performance = Sale.objects.filter(
             date__range=[start_date, end_date]
         ).values(
             'product__id', 'product__name'
         ).annotate(
-            total_sales=Sum('amount'),
+            total_sales=Sum(F('product__price') * F('quantity')),
             units_sold=Sum('quantity'),
-            revenue=Sum(F('amount') * F('quantity'))
+            revenue=Sum(F('product__price') * F('quantity'))  # Тут revenue = total_sales
         ).order_by('-total_sales')[:limit]
 
         return JsonResponse({
@@ -323,22 +325,19 @@ class LeaderboardView(DateRangeMixin, View):
 
         start_date, end_date, period = self.get_date_range(request)
 
-        # Filter sales once to improve performance
         sales_in_period = Sale.objects.filter(date__range=[start_date, end_date])
 
-        # Top employees
         top_employees = sales_in_period.values(
-            'employee__id', 'employee__username'
+            'employee__id', 'employee__user__username'
         ).annotate(
-            total_sales=Sum('amount'),
+            total_sales=Sum(F('product__price') * F('quantity')),
             transactions_count=Count('id')
         ).order_by('-total_sales')[:employee_limit]
 
-        # Top products
         top_products = sales_in_period.values(
             'product__id', 'product__name'
         ).annotate(
-            total_sales=Sum('amount'),
+            total_sales=Sum(F('product__price') * F('quantity')),
             units_sold=Sum('quantity')
         ).order_by('-total_sales')[:product_limit]
 
@@ -357,18 +356,15 @@ class SalesSummaryView(DateRangeMixin, View):
 
         start_date, end_date, period = self.get_date_range(request)
 
-        # Filter sales once to improve performance
         sales_data = Sale.objects.filter(date__range=[start_date, end_date])
 
-        # Sales statistics
         total_sales = sales_data.aggregate(
-            total=Coalesce(Sum('amount'), 0, output_field=DecimalField())
+            total=Coalesce(Sum(F('product__price') * F('quantity')), 0, output_field=DecimalField())
         )['total']
 
         total_transactions = sales_data.count()
         average_sale = total_sales / total_transactions if total_transactions > 0 else 0
 
-        # Count unique employees and products
         unique_employees = sales_data.values('employee').distinct().count()
         unique_products = sales_data.values('product').distinct().count()
 
