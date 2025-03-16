@@ -14,8 +14,8 @@ urlpatterns = [
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
 
     # Default route for the homepage
-    path('stat/', views.statistic, name='statistic'),  # Statistics page route
-    path('tasks/', views.tasks, name='tasks'),  # Task page route
+    #path('stat/', views.statistic, name='statistic'),  # Statistics page route
+    #path('tasks/', views.tasks, name='tasks'),  # Task page route
 
     # Authentication endpoints
     path('api/register/', views.RegisterView.as_view(), name='register_api'),

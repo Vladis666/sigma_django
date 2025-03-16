@@ -47,6 +47,10 @@ def sales_list(request, exception):
     return render(request, "app/sales_list.html")
 
 
+def page_not_found(request, exception):
+    return render(request, "app/notfound.html")
+
+
 class LoginRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
