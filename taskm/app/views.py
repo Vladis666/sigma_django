@@ -15,20 +15,36 @@ from django.utils.timezone import now
 from app.models import Product, Sale
 
 
-def index(request):
-    return render(request, "index.html")
+def home(request):
+    return render(request, "app/home.html")
 
 
-def statistic(request):
-    return render(request, "statistic.html")
+def add_sale(request):
+    return render(request, "app/add_sale.html")
 
 
-def tasks(request):
-    return render(request, "tasks.html")
+def admin_dashboard(request):
+    return render(request, "app/admin_dashboard.html")
 
 
-def page_not_found(request, exception):
-    return render(request, "notfound.html")
+def daily_stats(request, exception):
+    return render(request, "app/daily_stats.html")
+
+
+def employee_list(request, exception):
+    return render(request, "app/employee_list.html")
+
+
+def leaderboard(request, exception):
+    return render(request, "app/leaderboard.html")
+
+
+def product_list(request, exception):
+    return render(request, "app/product_list.html")
+
+
+def sales_list(request, exception):
+    return render(request, "app/sales_list.html")
 
 
 class LoginRequiredMixin:
