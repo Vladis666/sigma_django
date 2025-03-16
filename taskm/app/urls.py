@@ -2,7 +2,18 @@ from django.urls import path
 
 from . import views
 urlpatterns = [
-    path('', views.index, name='index'),  # Default route for the homepage
+    path('', views.index, name='index'),
+    path('home/', views.home, name='home'),
+
+    path('employees/', views.employee_list, name='employee_list'),
+    path('products/', views.product_list, name='product_list'),
+    path('sales/', views.sales_list, name='sales_list'),
+    path('add_sale/', views.add_sale, name='add_sale'),
+    path('leaderboard/', views.leaderboard, name='leaderboard'),
+    path('daily_stats/', views.daily_stats, name='daily_stats'),
+    path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
+
+    # Default route for the homepage
     path('stat/', views.statistic, name='statistic'),  # Statistics page route
     path('tasks/', views.tasks, name='tasks'),  # Task page route
 
