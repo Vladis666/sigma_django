@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Працівники | Моніторинг продажів{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>Працівники</h1>
+    <a href="/admin/sales_app/employee/add/" class="btn">Додати працівника</a>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+        <tr>
+            <th>Ім'я</th>
+            <th>Посада</th>
+            <th>Телефон</th>
+            <th>Email</th>
+            <th>Дії</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for employee in employees %}
+        <tr>
+            <td>{{ employee }}</td>
+            <td>{{ employee.position }}</td>
+            <td>{{ employee.phone }}</td>
+            <td>{{ employee.user.email }}</td>
+            <td>
+                <div style="display: flex; gap: 5px;">
+                    <a href="/admin/sales_app/employee/{{ employee.id }}/change/" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.9rem;">Редагувати</a>
+                </div>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" style="text-align: center;">Немає даних про працівників</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

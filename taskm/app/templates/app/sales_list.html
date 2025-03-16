@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Продажі | Моніторинг продажів{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>Продажі</h1>
+    <a href="{% url 'add_sale' %}" class="btn">Додати продаж</a>
+</div>
+
+<!-- Фільтрація продажів -->
+<div class="card">
+    <h2>Фільтрувати продажі</h2>
+    <form method="get" class="filter-form">
+        <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+                <label for="{{ filter_form.start_date.id_for_label }}">{{ filter_form.start_date.label }}</label>
+                {{ filter_form.start_date }}
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+                <label for="{{ filter_form.end_date.id_for_label }}">{{ filter_form.end_date.label }}</label>
+                {{ filter_form.end_date }}
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+                <label for="{{ filter_form.employee.id_for_label }}">Працівник</label>
+                {{ filter_form.employee }}
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+                <label for="{{ filter_form.product.id_for_label }}">Товар</label>
+                {{ filter_form.product }}
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button type="submit" class="btn">Застосувати фільтр</button>
+            <a href="{% url 'sales_list' %}" class="btn btn-secondary">Скинути</a>
+        </div>
+    </form>
+</div>
+
+{% if is_filtered %}
+<div class="alert alert-success">
+    <p>Відфільтровано продажі:
+        {% if filter_form.start_date.value %}від {{ filter_form.start_date.value }}{% endif %}
+        {% if filter_form.end_date.value %}до {{ filter_form.end_date.value }}{% endif %}
+        {% if filter_form.employee.value %}за працівником {{ filter_employee }}{% endif %}
+        {% if filter_form.product.value %}за товаром {{ filter_product }}{% endif %}
+    </p>
+</div>
+{% endif %}
+
+<div class="card">
+    <table>
+        <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Працівник</th>
+            <th>Товар</th>
+            <th>Кількість</th>
+            <th>Сума</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for sale in sales %}
+        <tr>
+            <td>{{ sale.date|date:"d.m.Y H:i" }}</td>
+            <td>{{ sale.employee }}</td>
+            <td>{{ sale.product }}</td>
+            <td>{{ sale.quantity }}</td>
+            <td>{{ sale.total_price }} грн</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" style="text-align: center;">Немає даних про продажі</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if sales.has_other_pages %}
+<div style="margin-top: 20px; text-align: center;">
+    <div class="card" style="display: inline-block; padding: 10px 20px;">
+        {% if sales.has_previous %}
+        <a href="?{{ get_params }}&page=1" class="btn btn-secondary" style="margin-right: 5px;">&laquo; Перша</a>
+        <a href="?{{ get_params }}&page={{ sales.previous_page_number }}" class="btn btn-secondary" style="margin-right: 5px;">Попередня</a>
+        {% endif %}
+
+        <span style="margin: 0 10px;">
+            Сторінка {{ sales.number }} з {{ sales.paginator.num_pages }}
+        </span>
+
+        {% if sales.has_next %}
+        <a href="?{{ get_params }}&page={{ sales.next_page_number }}" class="btn btn-secondary" style="margin-left: 5px;">Наступна</a>
+        <a href="?{{ get_params }}&page={{ sales.paginator.num_pages }}" class="btn btn-secondary" style="margin-left: 5px;">Остання &raquo;</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

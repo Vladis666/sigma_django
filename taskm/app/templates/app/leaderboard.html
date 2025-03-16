@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Таблиця лідерів | Моніторинг продажів{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<h1>Таблиця лідерів за останні 30 днів</h1>
+
+<!-- Таблиця лідерів -->
+<div class="card card-highlight">
+    <table>
+        <thead>
+        <tr>
+            <th width="70">Місце</th>
+            <th>Працівник</th>
+            <th>Посада</th>
+            <th>Кількість продажів</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for employee in leaders %}
+        <tr class="{% if forloop.counter == 1 %}gold-leader{% elif forloop.counter == 2 %}silver-leader{% elif forloop.counter == 3 %}bronze-leader{% endif %}">
+            <td style="text-align: center; font-weight: bold;">
+                {% if forloop.counter == 1 %}
+                <span style="font-size: 1.5em; color: var(--orange-500);">🏆</span>
+                {% elif forloop.counter == 2 %}
+                <span style="font-size: 1.3em; color: var(--gray-600);">🥈</span>
+                {% elif forloop.counter == 3 %}
+                <span style="font-size: 1.2em; color: #cd7f32;">🥉</span>
+                {% else %}
+                {{ forloop.counter }}
+                {% endif %}
+            </td>
+            <td>{{ employee.user.get_full_name }}</td>
+            <td>{{ employee.position }}</td>
+            <td>{{ employee.sales_count }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4" style="text-align: center;">Немає даних про продажі</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Графік трендів продажів -->
+<div class="card" style="margin-top: 30px;">
+    <h2>Тренди продажів за останні 30 днів</h2>
+    <div style="height: 300px; position: relative;">
+        <canvas id="salesTrendChart"></canvas>
+    </div>
+</div>
+
+<script>
+    // Дані для графіку трендів продажів за останні 30 днів
+    document.addEventListener('DOMContentLoaded', function() {
+        const labels = [
+            {% for employee in leaders %}
+        "{{ employee.user.get_full_name }}",
+        {% endfor %}
+    ];
+        const salesData = [
+            {% for employee in leaders %}
+        {{ employee.sales_count }},
+        {% endfor %}
+    ];
+
+        // Створення графіка за допомогою Chart.js
+        const ctx = document.getElementById('salesTrendChart').getContext('2d');
+        const salesTrendChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Кількість продажів',
+                    data: salesData,
+                    backgroundColor: 'rgba(255, 119, 51, 0.7)',
+                    borderColor: 'rgba(255, 119, 51, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Кількість продажів'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return `Продажі: ${tooltipItem.raw}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+
+<div class="card" style="margin-top: 30px; background-color: var(--orange-50);">
+    <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px;">
+            <h2>Мотивація працівників</h2>
+            <p>Таблиця лідерів відображає найуспішніших працівників за останні 30 днів. Використовуйте ці дані для мотивації персоналу та відзначення найкращих результатів.</p>
+        </div>
+        <div style="flex: 0 0 auto;">
+            <a href="{% url 'admin_dashboard' %}" class="btn">Перейти до панелі адміністратора</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
