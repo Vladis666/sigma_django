@@ -1,14 +1,10 @@
 from unittest.mock import patch, MagicMock
 from decimal import Decimal
-
-from django.http import JsonResponse
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from django.utils import timezone
 from django.contrib.auth.models import User
-from rest_framework.test import force_authenticate
-from django.db.models import Sum, F, Value
-from django.db.models.functions import Coalesce
+
 from .models import Sale, Product
 
 
