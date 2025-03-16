@@ -369,34 +369,221 @@
                 min-width: 100%;
             }
         }
+        /* Основний стиль для висувної панелі */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -250px; /* Початкове положення поза екраном */
+            width: 250px;
+            height: 100%;
+            background-color: var(--gray-800);
+            color: white;
+            transition: right 0.3s ease; /* Анімація для висування */
+            box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .sidebar.open {
+            right: 0; /* Панель зсувається на екран */
+        }
+
+        /* Вміст панелі */
+        .sidebar-content {
+            padding: 20px;
+        }
+
+        /* Кнопка для закриття панелі */
+        .close-sidebar-btn {
+            background: none;
+            border: none;
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .close-sidebar-btn:hover {
+            color: var(--orange-500);
+        }
+
+        /* Список посилань в панелі */
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 50px; /* Відступ після кнопки */
+        }
+
+        .sidebar ul li {
+            margin: 15px 0;
+        }
+
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: block;
+            padding: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .sidebar ul li a:hover {
+            background-color: var(--gray-700);
+        }
+
+        /* Кнопка для відкриття панелі */
+        .open-sidebar-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--orange-500);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1100; /* Задаємо великий z-index, щоб кнопка була на передньому плані */
+        }
+
+        .open-sidebar-btn:hover {
+            background-color: var(--orange-600);
+        }
+        /* Стиль для іконки трьох рисочок */
+        .hamburger-icon {
+            font-size: 30px;  /* Розмір іконки */
+            display: inline-block;
+            color: white; /* Колір рисочок */
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .open-sidebar-btn {
+            background-color: var(--orange-500);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1100; /* Задаємо великий z-index, щоб кнопка була на передньому плані */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .open-sidebar-btn:hover .hamburger-icon {
+            color: var(--orange-600); /* Колір рисочок при наведенні */
+        }
+
+        .open-sidebar-btn:hover {
+            background-color: var(--orange-600);
+        }
+        .close-sidebar-btn {
+            background: none;
+            border: none;
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+            position: absolute;
+            top: 20px;
+            left: 0; /* Тепер кнопка буде на самому краю */
+            margin-left: 20px; /* Відступ від лівого краю, щоб кнопка не була зовсім на межі */
+        }
+
+        .close-sidebar-btn:hover {
+            color: var(--orange-500);
+        }
+        .body-shift {
+            transition: margin-right 0.3s ease; /* Анімація для зміщення */
+            margin-right: 250px; /* Відстань, на яку зміщується вміст при відкритті панелі */
+        }
+
+        /* Клас для вмісту на мобільних пристроях */
+        .body-shift-mobile {
+            margin-right: 200px; /* Зміщення для мобільної версії */
+        }
+
+        /* Приховування панелі на мобільних пристроях */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+        }
+
     </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <nav>
+<button class="open-sidebar-btn" id="openSidebarBtn">
+    <span class="hamburger-icon">&#9776;</span> <!-- Три рисочки -->
+</button>
+
+
+
+<!-- Висувна бічна панель -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-content">
+        <button class="close-sidebar-btn" id="closeSidebarBtn">&times;</button>
         <ul>
-            <li><a href="{% url 'home' %}" {% if request.path == '/' %}class="active"{% endif %}>Головна</a></li>
-            <li><a href="{% url 'employee_list' %}" {% if 'employee' in request.path %}class="active"{% endif %}>Працівники</a></li>
-            <li><a href="{% url 'product_list' %}" {% if 'product' in request.path %}class="active"{% endif %}>Товари</a></li>
-            <li><a href="{% url 'sales_list' %}" {% if 'sales' in request.path %}class="active"{% endif %}>Продажі</a></li>
-            <li><a href="{% url 'add_sale' %}" {% if 'add_sale' in request.path %}class="active"{% endif %}>Додати продаж</a></li>
-            <li><a href="{% url 'leaderboard' %}" {% if 'leaderboard' in request.path %}class="active"{% endif %}>Таблиця лідерів</a></li>
-            <li><a href="{% url 'daily_stats' %}" {% if 'daily_stats' in request.path %}class="active"{% endif %}>Щоденна статистика</a></li>
-            <li><a href="{% url 'admin_dashboard' %}" {% if 'admin-dashboard' in request.path %}class="active"{% endif %}>Панель адміністратора</a></li>
-            <li><a href="/admin/" {% if '/admin/' in request.path %}class="active"{% endif %}>Адмін-панель</a></li>
+            <li><a href="{% url 'home' %}">Головна</a></li>
+            <li><a href="{% url 'employee_list' %}">Працівники</a></li>
+            <li><a href="{% url 'product_list' %}">Товари</a></li>
+            <li><a href="{% url 'sales_list' %}">Продажі</a></li>
+            <li><a href="{% url 'add_sale' %}">Додати продаж</a></li>
+            <li><a href="{% url 'leaderboard' %}">Таблиця лідерів</a></li>
+            <li><a href="{% url 'daily_stats' %}">Щоденна статистика</a></li>
+            <li><a href="{% url 'admin_dashboard' %}">Панель адміністратора</a></li>
+            <li><a href="/admin/">Адмін-панель</a></li>
         </ul>
-    </nav>
-
-    <div class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        {% block content %}{% endblock %}
     </div>
+</div>
+
+<div class="container">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</div>
+<script>
+    /// Отримуємо елементи
+    const openSidebarBtn = document.getElementById("openSidebarBtn");
+    const closeSidebarBtn = document.getElementById("closeSidebarBtn");
+    const sidebar = document.getElementById("sidebar");
+    const body = document.body; // Тіло документа для зміщення контенту
+
+    // Відкриваємо бічну панель
+    openSidebarBtn.addEventListener("click", () => {
+        sidebar.classList.add("open");
+        body.classList.add("body-shift"); // Зміщуємо вміст
+        if (window.innerWidth <= 768) {
+            body.classList.add("body-shift-mobile"); // Додаємо зміщення для мобільних
+        }
+    });
+
+    // Закриваємо бічну панель
+    closeSidebarBtn.addEventListener("click", () => {
+        sidebar.classList.remove("open");
+        body.classList.remove("body-shift"); // Повертаємо вміст на місце
+        body.classList.remove("body-shift-mobile"); // Повертаємо зміщення для мобільних
+    });
+
+    // Закриття панелі при натисканні за межами панелі
+    document.addEventListener("click", (e) => {
+        if (!sidebar.contains(e.target) && !openSidebarBtn.contains(e.target)) {
+            sidebar.classList.remove("open");
+            body.classList.remove("body-shift");
+            body.classList.remove("body-shift-mobile");
+        }
+    });
+
+</script>
+
 </body>
 </html>

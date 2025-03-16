@@ -7,8 +7,13 @@ from app.views import page_not_found
 urlpatterns = [
     path('admin/', admin.site.urls),  # Admin panel route
     path("", include('app.urls')),  # This includes the app's URLs
-    path('stat/', views.statistic, name='statistic'),  # Direct route to statistic view
-    path('tasks/', views.tasks, name='tasks'),  # Direct route to tasks view
+    path('employees/', views.employee_list, name='employee_list'),
+    path('products/', views.product_list, name='product_list'),
+    path('sales/', views.sales_list, name='sales_list'),
+    path('add_sale/', views.add_sale, name='add_sale'),
+    path('leaderboard/', views.leaderboard, name='leaderboard'),
+    path('daily_stats/', views.daily_stats, name='daily_stats'),
+    path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
 ]
 
 # Custom 404 page handler

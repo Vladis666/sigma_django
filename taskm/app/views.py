@@ -27,23 +27,23 @@ def admin_dashboard(request):
     return render(request, "app/admin_dashboard.html")
 
 
-def daily_stats(request, exception):
+def daily_stats(request):
     return render(request, "app/daily_stats.html")
 
 
-def employee_list(request, exception):
+def employee_list(request):
     return render(request, "app/employee_list.html")
 
 
-def leaderboard(request, exception):
+def leaderboard(request):
     return render(request, "app/leaderboard.html")
 
 
-def product_list(request, exception):
+def product_list(request):
     return render(request, "app/product_list.html")
 
 
-def sales_list(request, exception):
+def sales_list(request):
     return render(request, "app/sales_list.html")
 
 
