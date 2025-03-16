@@ -24,11 +24,11 @@ urlpatterns = [
     path('api/products/<int:product_id>/delete/', ProductDeleteView.as_view(), name='product_delete'),
 
     # SalesStatistics
-    path('api/sales/statistics/<str:period>/', SalesStatisticsView.as_view(), name='sales-statistics'),
-    path('api/sales/statistics/', SalesStatisticsView.as_view(), name='sales-statistics-default'),
+    path('api/sales/statistics/', SalesStatisticsView.as_view(), name='sales-statistics'),
 
     # ProductPerformance
     path('api/sales/product-performance/', ProductPerformanceView.as_view(), name='product-performance'),
+    path('api/sales/employee-performance/', EmployeePerformanceView.as_view(), name='employee-performance'),
 
     #EmployeePerformance
     path('api/sales/employee-performance/', EmployeePerformanceView.as_view(), name='employee-performance'),

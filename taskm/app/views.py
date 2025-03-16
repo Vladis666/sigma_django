@@ -10,8 +10,10 @@ from django.template.defaulttags import now
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
-
 from django.contrib.auth.models import User
+from django.utils.timezone import now
+
+from app.models import Product, Sale
 
 
 def index(request):
@@ -103,8 +105,40 @@ class UserStatusView(View):
         else:
             return JsonResponse({'authenticated': False})
 
+
+# Views для Product
+class DateRangeMixin:
+    def get_date_range(self, request):
+        period = request.GET.get('period', 'week')
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+
+        end_date = now()
+
+        # Set default or custom period
+        if start_date_str and end_date_str:
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+                period = 'custom'
+            except ValueError:
+                start_date = self._get_start_date(period, end_date)
+        else:
+            start_date = self._get_start_date(period, end_date)
+
+        return start_date, end_date, period
+
+    def _get_start_date(self, period, end_date):
+        return {
+            'day': end_date - timedelta(days=1),
+            'week': end_date - timedelta(weeks=1),
+            'month': end_date - timedelta(days=30)
+        }.get(period, end_date - timedelta(days=30))
+
+
 class ProductListView(View):
     def get(self, request):
+        # Use select_related or prefetch_related if needed to optimize queries
         products = Product.objects.all().values('id', 'name', 'description', 'price')
         return JsonResponse({'products': list(products)})
 
@@ -112,31 +146,43 @@ class ProductListView(View):
 @method_decorator(csrf_exempt, name='dispatch')
 class ProductCreateView(LoginRequiredMixin, View):
     def post(self, request):
-        data = json.loads(request.body)
-        product = Product.objects.create(
-            name=data.get('name'),
-            description=data.get('description'),
-            price=data.get('price'),
-            created_by=request.user
-        )
-        return JsonResponse({
-            'id': product.id,
-            'name': product.name,
-            'description': product.description,
-            'price': product.price
-        })
+        try:
+            data = json.loads(request.body)
+
+            # Validate required fields
+            required_fields = ['name', 'price']
+            for field in required_fields:
+                if field not in data:
+                    return JsonResponse({'error': f'Missing required field: {field}'}, status=400)
+
+            product = Product.objects.create(
+                name=data['name'],
+                description=data.get('description', ''),  # Use get with default value
+                price=data['price'],
+                created_by=request.user
+            )
+
+            return JsonResponse({
+                'id': product.id,
+                'name': product.name,
+                'price': product.price
+            }, status=201)  # 201 Created status
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
 
 
 class ProductDetailView(View):
     def get(self, request, product_id):
         try:
-            product = Product.objects.get(id=product_id)
+            # Use select_related to optimize query
+            product = Product.objects.select_related('created_by').get(id=product_id)
             return JsonResponse({
                 'id': product.id,
                 'name': product.name,
-                'description': product.description,
-                'price': product.price,
-                'created_by': product.created_by.username
+                'price': product.price
             })
         except Product.DoesNotExist:
             return JsonResponse({'error': 'Product not found'}, status=404)
@@ -148,68 +194,60 @@ class ProductUpdateView(LoginRequiredMixin, View):
         try:
             product = Product.objects.get(id=product_id)
 
-            if product.created_by != request.user and not request.user.is_staff:
-                return JsonResponse({'error': 'Not authorized to update this product'}, status=403)
+            try:
+                data = json.loads(request.body)
 
-            data = json.loads(request.body)
-            product.name = data.get('name', product.name)
-            product.description = data.get('description', product.description)
-            product.price = data.get('price', product.price)
-            product.save()
+                # Update fields only if they exist in the request
+                if 'name' in data:
+                    product.name = data['name']
+                if 'description' in data:
+                    product.description = data['description']
+                if 'price' in data:
+                    product.price = data['price']
 
-            return JsonResponse({
-                'id': product.id,
-                'name': product.name,
-                'description': product.description,
-                'price': product.price
-            })
+                product.save()
+
+                return JsonResponse({
+                    'id': product.id,
+                    'name': product.name,
+                    'description': product.description,
+                    'price': product.price
+                })
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
         except Product.DoesNotExist:
             return JsonResponse({'error': 'Product not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
 
     def patch(self, request, product_id):
         return self.put(request, product_id)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class ProductDeleteView(LoginRequiredMixin, StaffRequiredMixin, View):
+class ProductDeleteView(LoginRequiredMixin, View):
     def delete(self, request, product_id):
         try:
             product = Product.objects.get(id=product_id)
+
+            # Security check
+            if not request.user.is_staff:
+                return JsonResponse({'error': 'Not authorized to delete products'}, status=403)
+
             product.delete()
-            return JsonResponse({'success': True})
+            return JsonResponse({'success': 'Product deleted successfully'}, status=200)
         except Product.DoesNotExist:
             return JsonResponse({'error': 'Product not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
 
 
-class SalesStatisticsView(View):
+class SalesStatisticsView(DateRangeMixin, View):
     def get(self, request, period='day'):
-        # Отримання параметрів для кастомного періоду
-        start_date_str = request.GET.get('start_date')
-        end_date_str = request.GET.get('end_date')
+        start_date, end_date, period = self.get_date_range(request)
 
-        end_date = now()
-
-        # Встановлення періоду за замовчуванням або кастомного
-        if start_date_str and end_date_str:
-            try:
-                start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-                end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
-                period = 'custom'
-            except ValueError:
-                # Якщо формат дати неправильний, використовуємо стандартні періоди
-                start_date = {
-                    'day': end_date - timedelta(days=1),
-                    'week': end_date - timedelta(weeks=1),
-                    'month': end_date - timedelta(days=30)
-                }.get(period, end_date - timedelta(days=30))
-        else:
-            start_date = {
-                'day': end_date - timedelta(days=1),
-                'week': end_date - timedelta(weeks=1),
-                'month': end_date - timedelta(days=30)
-            }.get(period, end_date - timedelta(days=30))
-
-# Загальна статистика продажів
+        # Total sales statistics
         total_sales = Sale.objects.filter(date__range=[start_date, end_date]).aggregate(
             total=Coalesce(Sum('amount'), 0, output_field=DecimalField())
         )['total']
@@ -225,35 +263,14 @@ class SalesStatisticsView(View):
         })
 
 
-class EmployeePerformanceView(View):
+class EmployeePerformanceView(DateRangeMixin, View):
     def get(self, request):
-        # Отримання параметрів для періоду
         period = request.GET.get('period', 'week')
-        start_date_str = request.GET.get('start_date')
-        end_date_str = request.GET.get('end_date')
-        limit = int(request.GET.get('limit', 10))  # Кількість найкращих працівників
+        limit = int(request.GET.get('limit', 10))
 
-        end_date = now()
+        start_date, end_date, period = self.get_date_range(request)
 
-        # Встановлення періоду за замовчуванням або кастомного
-        if start_date_str and end_date_str:
-            try:
-                start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-                end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
-            except ValueError:
-                start_date = {
-                    'day': end_date - timedelta(days=1),
-                    'week': end_date - timedelta(weeks=1),
-                    'month': end_date - timedelta(days=30)
-                }.get(period, end_date - timedelta(days=30))
-        else:
-            start_date = {
-                'day': end_date - timedelta(days=1),
-                'week': end_date - timedelta(weeks=1),
-                'month': end_date - timedelta(days=30)
-            }.get(period, end_date - timedelta(days=30))
-
-        # Отримання продуктивності працівників
+        # Employee performance
         employee_performance = Sale.objects.filter(
             date__range=[start_date, end_date]
         ).values(
@@ -272,35 +289,14 @@ class EmployeePerformanceView(View):
         })
 
 
-class ProductPerformanceView(View):
+class ProductPerformanceView(DateRangeMixin, View):
     def get(self, request):
-        # Отримання параметрів для періоду
         period = request.GET.get('period', 'week')
-        start_date_str = request.GET.get('start_date')
-        end_date_str = request.GET.get('end_date')
-        limit = int(request.GET.get('limit', 10))  # Кількість найкращих продуктів
+        limit = int(request.GET.get('limit', 10))
 
-        end_date = now()
+        start_date, end_date, period = self.get_date_range(request)
 
-        # Встановлення періоду за замовчуванням або кастомного
-        if start_date_str and end_date_str:
-            try:
-                start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-                end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
-            except ValueError:
-                start_date = {
-                    'day': end_date - timedelta(days=1),
-                    'week': end_date - timedelta(weeks=1),
-                    'month': end_date - timedelta(days=30)
-                }.get(period, end_date - timedelta(days=30))
-        else:
-            start_date = {
-                'day': end_date - timedelta(days=1),
-                'week': end_date - timedelta(weeks=1),
-                'month': end_date - timedelta(days=30)
-            }.get(period, end_date - timedelta(days=30))
-
-        # Отримання продуктивності продуктів
+        # Product performance
         product_performance = Sale.objects.filter(
             date__range=[start_date, end_date]
         ).values(
@@ -310,6 +306,7 @@ class ProductPerformanceView(View):
             units_sold=Sum('quantity'),
             revenue=Sum(F('amount') * F('quantity'))
         ).order_by('-total_sales')[:limit]
+
         return JsonResponse({
             'product_performance': list(product_performance),
             'period': period,
@@ -318,49 +315,27 @@ class ProductPerformanceView(View):
         })
 
 
-class LeaderboardView(View):
+class LeaderboardView(DateRangeMixin, View):
     def get(self, request):
-        # Отримання параметрів для періоду
         period = request.GET.get('period', 'week')
-        start_date_str = request.GET.get('start_date')
-        end_date_str = request.GET.get('end_date')
         employee_limit = int(request.GET.get('employee_limit', 5))
         product_limit = int(request.GET.get('product_limit', 5))
 
-        end_date = now()
+        start_date, end_date, period = self.get_date_range(request)
 
-        # Встановлення періоду за замовчуванням або кастомного
-        if start_date_str and end_date_str:
-            try:
-                start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-                end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
-            except ValueError:
-                start_date = {
-                    'day': end_date - timedelta(days=1),
-                    'week': end_date - timedelta(weeks=1),
-                    'month': end_date - timedelta(days=30)
-                }.get(period, end_date - timedelta(days=30))
-        else:
-            start_date = {
-                'day': end_date - timedelta(days=1),
-                'week': end_date - timedelta(weeks=1),
-                'month': end_date - timedelta(days=30)
-            }.get(period, end_date - timedelta(days=30))
+        # Filter sales once to improve performance
+        sales_in_period = Sale.objects.filter(date__range=[start_date, end_date])
 
-        # Топ працівників
-        top_employees = Sale.objects.filter(
-            date__range=[start_date, end_date]
-        ).values(
+        # Top employees
+        top_employees = sales_in_period.values(
             'employee__id', 'employee__username'
         ).annotate(
             total_sales=Sum('amount'),
             transactions_count=Count('id')
         ).order_by('-total_sales')[:employee_limit]
 
-        # Топ продуктів
-        top_products = Sale.objects.filter(
-            date__range=[start_date, end_date]
-        ).values(
+        # Top products
+        top_products = sales_in_period.values(
             'product__id', 'product__name'
         ).annotate(
             total_sales=Sum('amount'),
@@ -376,40 +351,24 @@ class LeaderboardView(View):
         })
 
 
-class SalesSummaryView(View):
+class SalesSummaryView(DateRangeMixin, View):
     def get(self, request):
-        # Отримання параметрів для періоду
         period = request.GET.get('period', 'week')
-        start_date_str = request.GET.get('start_date')
-        end_date_str = request.GET.get('end_date')
 
-        end_date = now()
+        start_date, end_date, period = self.get_date_range(request)
 
-        # Встановлення періоду за замовчуванням або кастомного
-        if start_date_str and end_date_str:
-            try:
-                start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-                end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
-            except ValueError:
-                start_date = {
-                    'day': end_date - timedelta(days=1),
-                    'week': end_date - timedelta(weeks=1),
-                    'month': end_date - timedelta(days=30)
-                }.get(period, end_date - timedelta(days=30))
-        else:
-            start_date = {
-                'day': end_date - timedelta(days=1),
-                'week': end_date - timedelta(weeks=1),
-                'month': end_date - timedelta(days=30)
-            }.get(period, end_date - timedelta(days=30))
-
-        # Загальна статистика
+        # Filter sales once to improve performance
         sales_data = Sale.objects.filter(date__range=[start_date, end_date])
-        total_sales = sales_data.aggregate(total=Coalesce(Sum('amount'), 0, output_field=DecimalField()))['total']
+
+        # Sales statistics
+        total_sales = sales_data.aggregate(
+            total=Coalesce(Sum('amount'), 0, output_field=DecimalField())
+        )['total']
+
         total_transactions = sales_data.count()
         average_sale = total_sales / total_transactions if total_transactions > 0 else 0
 
-        # Кількість унікальних продавців і проданих товарів
+        # Count unique employees and products
         unique_employees = sales_data.values('employee').distinct().count()
         unique_products = sales_data.values('product').distinct().count()
 
