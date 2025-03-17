@@ -41,9 +41,18 @@ def add_sale(request):
     if request.method == 'POST':
         form = SaleForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Продаж успішно додано!')
-            return redirect('sales_list')
+            sale = form.save(commit=False)  # Зберігаємо, але не записуємо у БД
+            id_to_sale=sale.product.id
+            product = Product.objects.get(id=id_to_sale)
+            # Перевіряємо, чи є достатня кількість товару
+            if product.quantity >= sale.quantity:
+                product.quantity -= sale.quantity  # Віднімаємо продану кількість
+                product.save()  # Оновлюємо товар у БД
+                sale.save()  # Зберігаємо продаж
+                messages.success(request, 'Продаж успішно додано!')
+                return redirect('sales_list')
+            else:
+                messages.error(request, 'Недостатня кількість товару!')
     else:
         form = SaleForm()
 
@@ -145,12 +154,10 @@ def leaderboard(request):
     return render(request, 'app/leaderboard.html', {
         'leaders': leaders,
     })
-   
 
 def product_list(request):
     products = Product.objects.all()
     return render(request, 'app/product_list.html', {'products': products})
-
 
 def sales_list(request):
     sales = Sale.objects.all().order_by('-date')
@@ -289,7 +296,7 @@ class DateRangeMixin:
 class ProductListView(View):
     def get(self, request):
         # Use select_related or prefetch_related if needed to optimize queries
-        products = Product.objects.all().values('id', 'name', 'description', 'price')
+        products = Product.objects.all().values('id', 'name', 'quantity', 'price')
         return JsonResponse({'products': list(products)})
 
 

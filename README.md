@@ -53,7 +53,8 @@ Before running the program, ensure you have the following installed:
 ```bash
 # Clone the repository
 git clone (https://github.com/Vladis666/sigma_django.git)
-cd your-repo-folder
+cd sigma_django
+cd taskm
 
 # Set up a virtual environment
 python -m venv venv
