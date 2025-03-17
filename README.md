@@ -112,7 +112,7 @@ python manage.py migrate --run-syncdb
 
 ## 👥 **Authors**  
 - **Vlad** – *Lead Developer* – [GitHub](https://github.com/Vladis666) 
-- **Yaroslav** – *Team Lead* – [GitHub](https://github.com/Gorob4ikLoL)
+- **Yaroslav** – *Project Manager* – [GitHub](https://github.com/Gorob4ikLoL)
 - **Iryna** – *Frontend Developer* – [GitHub](https://github.com/Androshchuk-Iryna)
 - **Anna** – *Frontend Developer* – [GitHub](https://github.com/anwalv) 
 - **Svytoslav** – *Backend Developer* – [GitHub](https://github.com/Koroway)
@@ -122,56 +122,57 @@ python manage.py migrate --run-syncdb
 ---
 
 ## 📜 **Version History**
-📌 **1** -
+📌 **1** :
+- Final changes
+  
+📌 **0.4** :
+- some changes to views, for correct front work
 
-📌 **0.3** - 
-some changes to views, for correct front work
+- deleted some files
 
-deleted some files
+- added Dropdown Right-Side Menu
 
-added Dropdown Right-Side Menu
+- changed path
 
-changed path
+- urls.py updated
 
-urls.py updated
+- changed files
 
-changed files
+- added sales list front
 
-added sales list front
+📌 **0.3** :
 
-📌 **0.2** – 
+- DataBase changes
 
-DataBase changes
+- Code optimization
 
-Code optimization
+- Bug fixing and writing tests for the main functionality.
 
-Bug fixing and writing tests for the main functionality.
+- Removed junk from settings.py
 
-Removed junk from settings.py
+- Update tests, fix admin panel and add requirements
 
-Update tests, fix admin panel and add requirements
+- Admin dashboard, add sales and base html added
 
-Admin dashboard, add sales and base html added
+- added daily stats front
 
-added daily stats front
+- added employee list front
 
-added employee list front
+- added leaderboard front
 
-added leaderboard front
+- added product list front
 
-added product list front
+📌 **0.2** :
 
-📌 **0.2** – 
+- Addуedew urls for products
 
-Addуedew urls for products
+- WIP: Added skeleton for sales statistics
 
-WIP: Added skeleton for sales statistics
+- Authentication and registration logic
 
-Authentication and registration logic
+📌 **0.1** :
 
-📌 **0.1** – 
-
-empty django project
+- empty django project
  
 
 ---
