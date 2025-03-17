@@ -168,10 +168,54 @@ def daily_stats(request):
 
     return render(request, 'app/daily_stats.html', {'daily_data': daily_data})
 
-def employee_list(request):
-    employees = Employee.objects.all()
-    return render(request, "app/employee_list.html")
 
+def employee_list(request):
+    # Обробка форми при POST-запиті
+    if request.method == 'POST' and request.POST.get('action') == 'add_employee':
+        try:
+            # Створення користувача
+            username = request.POST.get('username')
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+
+            # Перевірка, чи не існує вже користувач з таким іменем
+            if User.objects.filter(username=username).exists():
+                messages.error(request, f'Користувач з логіном {username} вже існує')
+                return redirect('employee_list')
+
+            # Створюємо нового користувача
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name
+            )
+
+            # Створення співробітника
+            position = request.POST.get('position')
+            phone = request.POST.get('phone')
+
+            employee = Employee.objects.create(
+                user=user,
+                position=position,
+                phone=phone
+            )
+
+            messages.success(request, f'Співробітник {first_name} {last_name} успішно доданий')
+            return redirect('employee_list')
+
+        except Exception as e:
+            messages.error(request, f'Помилка при створенні співробітника: {str(e)}')
+
+    # Отримання всіх співробітників для відображення
+    employees = Employee.objects.all().select_related('user')
+
+    return render(request, 'app/employee_list.html', {
+        'employees': employees
+    })
 
 def leaderboard(request):
     thirty_days_ago = timezone.now() - timedelta(days=30)

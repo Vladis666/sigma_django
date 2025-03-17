@@ -5,8 +5,76 @@
 {% block content %}
 <div class="header">
     <h1>Працівники</h1>
-    <a href="/admin/sales_app/employee/add/" class="btn">Додати працівника</a>
+    <button id="openFormBtn" class="btn">Додати працівника</button>
 </div>
+
+<!-- Розкривна форма для додавання співробітника -->
+<div id="employeeFormContainer" class="form-container" style="display: none;">
+    <div class="form-card">
+        <div class="form-header">
+            <h2>Додавання нового співробітника</h2>
+            <button id="closeFormBtn" class="close-btn">&times;</button>
+        </div>
+        <!-- Змінюємо URL для форми на поточну сторінку -->
+        <form id="employeeForm" method="post" action="">
+            {% csrf_token %}
+            <!-- Додаємо приховане поле для визначення дії форми -->
+            <input type="hidden" name="action" value="add_employee">
+
+            <!-- Поля для employee -->
+            <div class="form-group">
+                <label for="position">Посада:</label>
+                <input type="text" id="position" name="position" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Телефон:</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+
+            <!-- Поля для user -->
+            <div class="form-group">
+                <label for="username">Логін:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="first_name">Ім'я:</label>
+                <input type="text" id="first_name" name="first_name" required>
+            </div>
+            <div class="form-group">
+                <label for="last_name">Прізвище:</label>
+                <input type="text" id="last_name" name="last_name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Пароль:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="password_confirm">Підтвердження паролю:</label>
+                <input type="password" id="password_confirm" name="password_confirm" required>
+            </div>
+
+            <div class="form-buttons">
+                <button type="submit" class="btn">Зберегти</button>
+                <button type="button" class="btn btn-secondary" id="cancelBtn">Скасувати</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Повідомлення про успіх/помилку -->
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+    <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
 <div class="card">
     <table>
@@ -22,13 +90,13 @@
         <tbody>
         {% for employee in employees %}
         <tr>
-            <td>{{ employee }}</td>
+            <td>{{ employee.user.first_name }} {{ employee.user.last_name }}</td>
             <td>{{ employee.position }}</td>
             <td>{{ employee.phone }}</td>
             <td>{{ employee.user.email }}</td>
             <td>
                 <div style="display: flex; gap: 5px;">
-                    <a href="/admin/sales_app/employee/{{ employee.id }}/change/" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.9rem;">Редагувати</a>
+                    <button class="edit-btn btn btn-secondary" data-id="{{ employee.id }}" style="padding: 4px 8px; font-size: 0.9rem;">Редагувати</button>
                 </div>
             </td>
         </tr>
@@ -40,4 +108,145 @@
         </tbody>
     </table>
 </div>
+
+<style>
+    .form-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .form-card {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        width: 500px;
+        max-width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .form-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+    }
+
+    .messages {
+        margin-bottom: 20px;
+    }
+
+    .message {
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+    }
+
+    .success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const openFormBtn = document.getElementById('openFormBtn');
+        const closeFormBtn = document.getElementById('closeFormBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const formContainer = document.getElementById('employeeFormContainer');
+        const employeeForm = document.getElementById('employeeForm');
+
+        // Відкрити форму
+        openFormBtn.addEventListener('click', function() {
+            formContainer.style.display = 'flex';
+        });
+
+        // Закрити форму
+        function closeForm() {
+            formContainer.style.display = 'none';
+            employeeForm.reset();
+        }
+
+        closeFormBtn.addEventListener('click', closeForm);
+        cancelBtn.addEventListener('click', closeForm);
+
+        // Закрити форму при кліку поза нею
+        formContainer.addEventListener('click', function(e) {
+            if (e.target === formContainer) {
+                closeForm();
+            }
+        });
+
+        // Валідація форми перед відправкою
+        employeeForm.addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('password_confirm').value;
+
+            if (password !== passwordConfirm) {
+                e.preventDefault();
+                alert('Паролі не співпадають!');
+            }
+        });
+
+        // Автоматично закрити повідомлення про успіх через 5 секунд
+        const messages = document.querySelectorAll('.message');
+        if (messages.length > 0) {
+            setTimeout(function() {
+                messages.forEach(function(message) {
+                    message.style.display = 'none';
+                });
+            }, 5000);
+        }
+    });
+</script>
 {% endblock %}
