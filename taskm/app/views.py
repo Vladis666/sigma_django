@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 from django.utils.timezone import now
 from django.utils import timezone
 from app.models import Product, Sale, Employee, SalesPlan
-from .forms import SaleForm, SalesFilterForm
+from .forms import SaleForm, SalesFilterForm, ProductForm
 from django.contrib import messages
 from django.shortcuts import render, redirect
 
@@ -57,6 +57,36 @@ def add_sale(request):
         form = SaleForm()
 
     return render(request, 'app/add_sale.html', {'form': form})
+
+
+def edit_product(request):
+    if request.method == "POST":
+        product_id = request.POST.get('product_id')
+        print(f"Отриманий ID продукту: {product_id}")
+        product = get_object_or_404(Product, id=product_id)
+
+        product.name = request.POST.get('name')
+        product.quantity = request.POST.get('quantity')
+        product.price = request.POST.get('price')
+        product.active = 'active' in request.POST
+
+        product.save()
+        return redirect('product_list')  # Направляємо на сторінку зі списком товарів
+
+
+def add_product(request):
+    print("product added")
+    if request.method == 'POST':
+        form = ProductForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Товар успішно додано!')
+            print("product added")
+            return redirect('product_list')  # Заміни на відповідний шлях
+    else:
+        form = ProductForm()
+
+    return render(request, 'app/add_product.html', {'form': form})
 
 def admin_dashboard(request):
     total_sales = Sale.objects.count()

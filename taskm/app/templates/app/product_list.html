@@ -5,8 +5,71 @@
 {% block content %}
 <div class="header">
     <h1>Товари</h1>
-    <a href="/admin/sales_app/product/add/" class="btn">Додати товар</a>
+   <a href="javascript:void(0);" class="btn" id="add-product-btn">Додати товар</a>
 </div>
+
+<div id="product-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span id="close-btn" class="close">&times;</span>
+        <h3>Додати товар</h3>
+        <form id="product-form" method="POST" action="{% url 'add_product' %}">
+            {% csrf_token %}
+            <div>
+                <label for="name">Назва товару</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div>
+                <label for="quantity">Кількість</label>
+                <input type="number" id="quantity" name="quantity" required>
+            </div>
+            <div>
+                <label for="price">Ціна</label>
+                <input type="number" id="price" name="price" step="0.01" required>
+            </div>
+            <div style="margin-top: 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
+                <label for="active" style="margin: 0;">Активний</label>
+                <input type="checkbox" id="active" name="active">
+            </div>
+            <div style="margin-top: 20px; margin-bottom: 14px; ">
+                <button type="submit" class="btn">Зберегти</button>
+                <button type="button" class="btn btn-secondary" id="cancel-btn">Скасувати</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Модальне вікно для редагування товару -->
+<div id="productchange-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span id="closechange-btn" class="close">&times;</span>
+        <h3>Редагувати товар</h3>
+        <form id="productchange-form" method="POST" action="{% url 'edit_product' %}">
+            {% csrf_token %}
+            <input type="hidden" id="product-id" name="product_id">
+            <div>
+                <label for="namechange">Назва товару</label>
+                <input type="text" id="namechange" name="name" required>
+            </div>
+            <div>
+                <label for="quantitychange">Кількість</label>
+                <input type="number" id="quantitychange" name="quantity" required>
+            </div>
+            <div>
+                <label for="pricechange">Ціна</label>
+                <input type="number" id="pricechange" name="price" step="0.01" required>
+            </div>
+            <div style="margin-top: 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
+                <label for="activechange" style="margin: 0;">Активний</label>
+                <input type="checkbox" id="activechange" name="active">
+            </div>
+            <div style="margin-top: 20px; margin-bottom: 14px;">
+                <button type="submit" class="btn">Зберегти</button>
+                <button type="button" class="btn btn-secondary" id="cancelchange-btn">Скасувати</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 
 <div class="card">
     <table>
@@ -38,7 +101,13 @@
             </td>
             <td>
                 <div style="display: flex; gap: 5px;">
-                    <a href="/admin/sales_app/product/{{ product.id }}/change/" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.9rem;">Редагувати</a>
+                    <a href="javascript:void(0);" class="btn btn-secondary" id="change-product-btn"
+                       data-product-id="{{ product.id }}"
+                       data-product-name="{{ product.name }}"
+                       data-product-quantity="{{ product.quantity }}"
+                       data-product-price="{{ product.price }}"
+                       data-product-active="{{ product.active }}"
+                       style="padding: 4px 8px; font-size: 0.9rem;">Редагувати</a>
                 </div>
             </td>
         </tr>
@@ -140,4 +209,71 @@
         </div>
     </div>
 </div>
+<script>
+        // Отримуємо елементи
+    const modal = document.getElementById("product-modal");
+    const btn = document.getElementById("add-product-btn");
+    const span = document.getElementById("close-btn");
+    const cancelBtn = document.getElementById("cancel-btn");
+
+    // Відкриваємо модальне вікно
+    btn.onclick = function() {
+        modal.style.display = "block";
+    }
+
+    // Закриваємо модальне вікно при натисканні на хрестик
+    span.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    // Закриваємо модальне вікно при натисканні на кнопку скасування
+    cancelBtn.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    // Закриваємо модальне вікно при натисканні поза його межами
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    document.querySelectorAll('#change-product-btn').forEach(button => {
+    button.onclick = function() {
+            const productId = this.getAttribute('data-product-id');
+            const productName = this.getAttribute('data-product-name');
+            const productQuantity = this.getAttribute('data-product-quantity');
+            const productPrice = this.getAttribute('data-product-price');
+            const productActive = this.getAttribute('data-product-active') === 'True'; // Перетворюємо строку на булеве значення
+
+            // Заповнюємо форму в модальному вікні
+            document.getElementById('product-id').value = productId;
+            document.getElementById('namechange').value = productName;
+            document.getElementById('quantitychange').value = productQuantity;
+            document.getElementById('pricechange').value = productPrice;
+            document.getElementById('activechange').checked = productActive;
+
+            // Відкриваємо модальне вікно для редагування
+            document.getElementById('productchange-modal').style.display = 'block';
+        };
+    });
+
+    // Закриваємо модальне вікно при натисканні на хрестик
+    document.getElementById('closechange-btn').onclick = function() {
+        document.getElementById('productchange-modal').style.display = 'none';
+    }
+
+    // Закриваємо модальне вікно при натисканні на кнопку скасування
+    document.getElementById('cancelchange-btn').onclick = function() {
+        document.getElementById('productchange-modal').style.display = 'none';
+    }
+
+    // Закриваємо модальне вікно при натисканні поза його межами
+    window.onclick = function(event) {
+        const modal = document.getElementById('productchange-modal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+</script>>
 {% endblock %}

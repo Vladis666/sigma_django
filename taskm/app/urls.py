@@ -24,8 +24,10 @@ urlpatterns = [
     path('api/user_status/', views.UserStatusView.as_view(), name='user_status'),
 
 # Product endpoints
+    path('api/products/', views.edit_product, name='edit_product'),
+    path('api/products/', views.add_product, name='add_product'),
     path('api/products/', views.ProductListView.as_view(), name='product_list'),
-    path('api/products/create/', views.ProductCreateView.as_view(), name='product_create'),
+   # path('api/products/create/', views.ProductCreateView.as_view(), name='product_create'),
     path('api/products/<int:product_id>/', views.ProductDetailView.as_view(), name='product_detail'),
     path('api/products/<int:product_id>/update/', views.ProductUpdateView.as_view(), name='product_update'),
     path('api/products/<int:product_id>/delete/', views.ProductDeleteView.as_view(), name='product_delete'),

@@ -14,3 +14,8 @@ class SalesFilterForm(forms.Form):
     end_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}), label="До")
     employee = forms.ModelChoiceField(queryset=Employee.objects.all(), required=False, empty_label="Всі працівники")
     product = forms.ModelChoiceField(queryset=Product.objects.all(), required=False, empty_label="Всі товари")
+
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ['name', 'quantity', 'price', 'active']
