@@ -417,6 +417,16 @@ class SalesStatisticsView(DateRangeMixin, View):
             'end_date': end_date.strftime('%Y-%m-%d')
         })
 
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from .models import Product  # Замініть на вашу модель
+
+def get_product_info(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    return JsonResponse({
+        'price': product.price,
+        'quantity': product.quantity  # Замініть на вашу змінну для кількості
+    })
 
 class EmployeePerformanceView(DateRangeMixin, View):
     def get(self, request):

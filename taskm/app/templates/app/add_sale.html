@@ -3,6 +3,7 @@
 {% block title %}Додати продаж | Моніторинг продажів{% endblock %}
 
 {% block content %}
+<!--suppress ALL -->
 <div class="header">
     <h1>Додати продаж</h1>
     <a href="{% url 'sales_list' %}" class="btn btn-secondary">Повернутися до списку</a>
@@ -64,109 +65,89 @@
 
 <script>
     // Add JavaScript to enhance the form
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get product select element
-        const productSelect = document.getElementById('{{ form.product.id_for_label }}');
-        const productInfo = document.getElementById('product-info');
-        const quantityInput = document.getElementById('{{ form.quantity.id_for_label }}');
+   document.addEventListener('DOMContentLoaded', function() {
+    const productSelect = document.getElementById('{{ form.product.id_for_label }}');
+    const productInfo = document.getElementById('product-info');
+    const quantityInput = document.getElementById('{{ form.quantity.id_for_label }}');
+    const submitButton = document.querySelector('button[type="submit"]');
 
-        // Store product data
-        const products = {};
+    const products = {};  // Кеш для збереження отриманих даних
 
-        // Populate product info when selection changes
-        productSelect.addEventListener('change', updateProductInfo);
+    productSelect.addEventListener('change', updateProductInfo);
+    quantityInput.addEventListener('input', updateTotalPrice);
 
-        // Initial setup if product is already selected
-        if (productSelect.value) {
-            updateProductInfo();
+    if (productSelect.value) {
+        updateProductInfo();
+    }
+
+    function updateProductInfo() {
+        const productId = productSelect.value;
+
+        if (!productId) {
+            productInfo.style.display = 'none';
+            submitButton.disabled = true;
+            return;
         }
 
-        function updateProductInfo() {
-            const productId = productSelect.value;
+        productInfo.style.display = 'block';
+        productInfo.innerHTML = '<p>Завантаження інформації про товар...</p>';
+        submitButton.disabled = true;
 
-            if (!productId) {
-                productInfo.style.display = 'none';
-                return;
-            }
-
-            // Show loading message
-            productInfo.style.display = 'block';
-            productInfo.innerHTML = '<p>Завантаження інформації про товар...</p>';
-
-            // If we already have this product's data, use it
-            if (products[productId]) {
-                displayProductInfo(products[productId]);
-                return;
-            }
-
-            // Otherwise simulate having the product data
-            // In a real implementation, this would be an AJAX call to get product data
-            setTimeout(() => {
-                displayProductInfo({
-                    name: productSelect.options[productSelect.selectedIndex].text,
-                    price: Math.floor(Math.random() * 1000) + 100,
-                    quantity: Math.floor(Math.random() * 50) + 1
-                });
-            }, 300);
+        if (products[productId]) {
+            displayProductInfo(products[productId]);
+            return;
         }
 
-        function displayProductInfo(product) {
-            productInfo.innerHTML = `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                    <div><strong>Ціна:</strong> ${product.price} грн</div>
-                    <div><strong>В наявності:</strong> ${product.quantity} шт.</div>
-                </div>
-                <div id="price-calculator" style="background-color: var(--orange-100); padding: 10px; border-radius: 4px; text-align: center; font-weight: bold; ${parseInt(quantityInput.value) > 0 ? '' : 'display: none;'}">
-                    Загальна сума: <span id="total-price">${calculateTotal(product.price)}</span> грн
-                </div>
-            `;
+        // AJAX-запит до Django API
+        fetch(`/get_product_info/${productId}/`)
+            .then(response => response.json())
+            .then(data => {
+                products[productId] = data;
+                displayProductInfo(data);
+            })
+            .catch(error => {
+                productInfo.innerHTML = `<p style="color: red;">Помилка завантаження даних</p>`;
+                console.error('Помилка отримання даних про товар:', error);
+            });
+    }
 
-            // Store product data
-            products[productSelect.value] = product;
+    function displayProductInfo(product) {
+        productInfo.innerHTML = `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <div><strong>Ціна:</strong> ${product.price} грн</div>
+                <div><strong>В наявності:</strong> ${product.quantity} шт.</div>
+            </div>
+            <div id="price-calculator" style="background-color: var(--orange-100); padding: 10px; border-radius: 4px; text-align: center; font-weight: bold; display: none;">
+                Загальна сума: <span id="total-price">0</span> грн
+            </div>
+        `;
+
+        updateTotalPrice();
+    }
+
+    function updateTotalPrice() {
+        const productId = productSelect.value;
+        const calculator = document.getElementById('price-calculator');
+        const totalPriceElement = document.getElementById('total-price');
+
+        if (!productId || !products[productId]) {
+            return;
         }
 
-        // Add validation for quantity and update total price
-        quantityInput.addEventListener('input', function() {
-            validateQuantity();
-            updateTotalPrice();
-        });
+        const price = products[productId].price;
+        const quantity = parseInt(quantityInput.value) || 0;
+        const availableQuantity = products[productId].quantity;
 
-        function validateQuantity() {
-            const value = parseInt(quantityInput.value);
-            if (isNaN(value) || value < 1) {
-                quantityInput.setCustomValidity('Кількість має бути більше 0');
-                return false;
-            }
-
-            // If we have product data, check against available quantity
-            const productId = productSelect.value;
-            if (productId && products[productId] && value > products[productId].quantity) {
-                quantityInput.setCustomValidity(`Недостатня кількість. В наявності: ${products[productId].quantity}`);
-                return false;
-            }
-
-            quantityInput.setCustomValidity('');
-            return true;
+        if (quantity < 1 || isNaN(quantity) || quantity > availableQuantity) {
+            calculator.style.display = 'none';
+            submitButton.disabled = true;
+            return;
         }
 
-        function updateTotalPrice() {
-            const productId = productSelect.value;
-            const calculator = document.getElementById('price-calculator');
-            const totalPriceElement = document.getElementById('total-price');
-
-            if (!productId || !products[productId] || !calculator || !totalPriceElement) {
-                return;
-            }
-
-            const price = products[productId].price;
-            calculator.style.display = parseInt(quantityInput.value) > 0 ? 'block' : 'none';
-            totalPriceElement.textContent = calculateTotal(price);
-        }
-
-        function calculateTotal(price) {
-            const quantity = parseInt(quantityInput.value) || 0;
-            return (price * quantity).toFixed(2);
-        }
-    });
+        calculator.style.display = 'block';
+        totalPriceElement.textContent = (price * quantity).toFixed(2);
+        submitButton.disabled = false;
+    }
+});
 </script>
 {% endblock %}
