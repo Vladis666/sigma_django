@@ -1,7 +1,7 @@
 import json
 from datetime import timedelta, datetime
 from django.contrib.auth import login, authenticate, logout
-from django.db.models import Sum, F, DecimalField, Count, Value
+from django.db.models import Sum, F, DecimalField, Count, Value, Q
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -16,7 +16,6 @@ from app.models import Product, Sale, Employee, SalesPlan
 from .forms import SaleForm, SalesFilterForm, ProductForm
 from django.contrib import messages
 from django.shortcuts import render, redirect
-
 
 def home(request):
     # Основні показники для головної сторінки
@@ -217,17 +216,17 @@ def employee_list(request):
         'employees': employees
     })
 
+
 def leaderboard(request):
     thirty_days_ago = timezone.now() - timedelta(days=30)
 
-    # Отримуємо топ співробітників за кількістю продажів
     leaders = Employee.objects.annotate(
-        sales_count=Count('sale', filter=Sale.objects.filter(date__gte=thirty_days_ago))
+        sales_count=Count('sale', filter=Q(sale__date__gte=thirty_days_ago))
     ).order_by('-sales_count')[:10]
 
-    return render(request, 'app/leaderboard.html', {
-        'leaders': leaders,
-    })
+    print(leaders)  # Debugging
+
+    return render(request, 'app/leaderboard.html', {'leaders': leaders})
 
 def product_list(request):
     products = Product.objects.all()

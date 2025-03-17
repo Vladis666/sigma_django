@@ -128,31 +128,21 @@
         </h2>
         <div style="display: flex; flex-direction: column; gap: 10px;">
             {% for product in products %}
-            {% if product.quantity <= 10 %}
-            <div style="background-color: white; padding: 10px; border-radius: 4px;
-                    border-left: 4px solid {% if product.quantity <= 5 %}var(--danger){% else %}var(--warning){% endif %};">
-                <div style="font-weight: bold;">{{ product.name }}</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-                    <div>Залишок: <strong>{{ product.quantity }} шт.</strong></div>
-                    <div>{{ product.price }} грн</div>
+                {% if product.quantity <= 10 %}
+                    <div style="background-color: white; padding: 10px; border-radius: 4px;
+                            border-left: 4px solid {% if product.quantity <= 5 %}var(--danger){% else %}var(--warning){% endif %};">
+                        <div style="font-weight: bold;">{{ product.name }}</div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                            <div>Залишок: <strong>{{ product.quantity }} шт.</strong></div>
+                            <div>{{ product.price }} грн</div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% empty %}
+                <div style="text-align: center; padding: 20px; color: var(--gray-600);">
+                    Немає товарів з малим запасом
                 </div>
-            </div>
-            {% endif %}
             {% endfor %}
-
-            {% with low_stock_count=0 %}
-            {% for product in products %}
-            {% if product.quantity <= 10 %}
-            {% with low_stock_count=1 %}{% endwith %}
-            {% endif %}
-            {% endfor %}
-
-            {% if low_stock_count == 0 %}
-            <div style="text-align: center; padding: 20px; color: var(--gray-600);">
-                Немає товарів з малим запасом
-            </div>
-            {% endif %}
-            {% endwith %}
         </div>
     </div>
 
@@ -161,56 +151,17 @@
         <h2 style="margin-top: 0; padding-bottom: 10px; border-bottom: 1px solid var(--gray-300);">
             <span style="color: var(--info);">📊</span> Статистика товарів
         </h2>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; flex-direction: column; gap: 10px; height: calc(100% - 45px);">
             <!-- Total products -->
-            <div style="background-color: white; padding: 15px; border-radius: 4px; text-align: center;">
+            <div style="background-color: white; padding: 15px; border-radius: 4px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center;">
                 <div style="font-size: 0.9rem; color: var(--gray-600);">Всього товарів</div>
-                <div style="font-size: 2rem; font-weight: bold; color: var(--gray-800);">{{ products|length }}</div>
-            </div>
-
-            <!-- Active products -->
-            <div style="background-color: white; padding: 15px; border-radius: 4px; text-align: center;">
-                <div style="font-size: 0.9rem; color: var(--gray-600);">Активних товарів</div>
-                <div style="font-size: 2rem; font-weight: bold; color: var(--success);">
-                    {% with active_count=0 %}
-                    {% for product in products %}
-                    {% if product.active %}
-                    {% with active_count=active_count|add:1 %}{% endwith %}
-                    {% endif %}
-                    {% endfor %}
-
-                    {{ active_count }}
-                    <div style="font-size: 0.9rem; color: var(--gray-600);">
-                        {% if products|length > 0 %}
-                        {{ active_count|floatformat:0 }}%
-                        {% else %}
-                        0%
-                        {% endif %}
-                    </div>
-                    {% endwith %}
-                </div>
-            </div>
-
-            <!-- Low stock products -->
-            <div style="background-color: white; padding: 15px; border-radius: 4px; text-align: center;">
-                <div style="font-size: 0.9rem; color: var(--gray-600);">Товарів з малим запасом</div>
-                <div style="font-size: 2rem; font-weight: bold; color: var(--warning);">
-                    {% with low_stock_count=0 %}
-                    {% for product in products %}
-                    {% if product.quantity <= 10 %}
-                    {% with low_stock_count=low_stock_count|add:1 %}{% endwith %}
-                    {% endif %}
-                    {% endfor %}
-
-                    {{ low_stock_count }}
-                    {% endwith %}
-                </div>
+                <div style="font-size: 2.5rem; font-weight: bold; color: var(--gray-800); margin-top: 10px;">{{ products|length }}</div>
             </div>
         </div>
     </div>
 </div>
 <script>
-        // Отримуємо елементи
+    // Отримуємо елементи
     const modal = document.getElementById("product-modal");
     const btn = document.getElementById("add-product-btn");
     const span = document.getElementById("close-btn");
@@ -275,5 +226,5 @@
             modal.style.display = 'none';
         }
     }
-</script>>
+</script>
 {% endblock %}

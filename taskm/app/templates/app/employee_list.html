@@ -84,7 +84,6 @@
             <th>Посада</th>
             <th>Телефон</th>
             <th>Email</th>
-            <th>Дії</th>
         </tr>
         </thead>
         <tbody>
@@ -95,9 +94,6 @@
             <td>{{ employee.phone }}</td>
             <td>{{ employee.user.email }}</td>
             <td>
-                <div style="display: flex; gap: 5px;">
-                    <button class="edit-btn btn btn-secondary" data-id="{{ employee.id }}" style="padding: 4px 8px; font-size: 0.9rem;">Редагувати</button>
-                </div>
             </td>
         </tr>
         {% empty %}
