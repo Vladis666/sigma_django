@@ -3,6 +3,12 @@
 
 
 
+
+
+**Presentation about our Project ( file a bit large so i decided to upload video at YouTube )**
+
+https://www.youtube.com/watch?v=gS2lu6bgro8
+
 ---
 
 # 🎯 **Sales Monitoring & Analytics Platform**  
@@ -52,7 +58,7 @@ Before running the program, ensure you have the following installed:
 ### 📥 **Installing**  
 ```bash
 # Clone the repository
-git clone (https://github.com/Vladis666/sigma_django.git)
+git clone https://github.com/Vladis666/sigma_django.git
 cd sigma_django
 cd taskm
 
@@ -116,64 +122,10 @@ python manage.py migrate --run-syncdb
 - **Yaroslav** – *Project Manager* – [GitHub](https://github.com/Gorob4ikLoL)
 - **Iryna** – *Frontend Developer* – [GitHub](https://github.com/Androshchuk-Iryna)
 - **Anna** – *Frontend Developer* – [GitHub](https://github.com/anwalv) 
-- **Svytoslav** – *Backend Developer* – [GitHub](https://github.com/Koroway)
+- **Sviatoslav** – *Backend Developer* – [GitHub](https://github.com/Koroway)
 - **Vadym** – *DataBase* – [GitHub](https://github.com/VadymBabyn)
 - **Max** – *Backend Developer* – [GitHub](https://github.com/m-ruzhynskyi)    
 
 ---
 
-## 📜 **Version History**
-📌 **1** :
-- Final changes
-  
-📌 **0.4** :
-- some changes to views, for correct front work
 
-- deleted some files
-
-- added Dropdown Right-Side Menu
-
-- changed path
-
-- urls.py updated
-
-- changed files
-
-- added sales list front
-
-📌 **0.3** :
-
-- DataBase changes
-
-- Code optimization
-
-- Bug fixing and writing tests for the main functionality.
-
-- Removed junk from settings.py
-
-- Update tests, fix admin panel and add requirements
-
-- Admin dashboard, add sales and base html added
-
-- added daily stats front
-
-- added employee list front
-
-- added leaderboard front
-
-- added product list front
-
-📌 **0.2** :
-
-- Addуedew urls for products
-
-- WIP: Added skeleton for sales statistics
-
-- Authentication and registration logic
-
-📌 **0.1** :
-
-- empty django project
- 
-
----
